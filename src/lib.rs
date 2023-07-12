@@ -4,16 +4,19 @@ use input_stream::InputStream;
 use scanner::{TokenType, Scanner, Token};
 use ast::{Expr, Value, AstPrinter};
 
+use crate::parser::Parser;
+
 mod scanner;
 mod ast;
 mod parser;
+mod interpreter;
 
 pub struct Lox {}
 
 impl Lox {
     pub fn run_file(path: &String) -> std::io::Result<()> {
         let contents = fs::read_to_string(path)?;
-        Lox::run(contents).unwrap();
+        Lox::run(contents);
         Ok(())
     }
 
@@ -26,27 +29,34 @@ impl Lox {
                 Ok(cmd) => cmd,
                 Err(_) => break,
             };
-            Lox::run(cmd).map_err(|err| Error::new(ErrorKind::Other, err))?;
+            Lox::run(cmd);
         }
         Ok(())
     }
 
-    pub fn run(source: String) -> Result<(), String> {
+    pub fn run(source: String) {
         let mut scanner = Scanner::new(source.as_str());
         let tokens = scanner.scan_tokens();
         println!("{:?}", tokens);
-        let expression =  Expr::Binary { 
-            left: Box::new(Expr::Unary { 
-                operator: Token { token_type: TokenType::Minus, lexeme: "-".to_string(), line: 1 },
-                right: Box::new(Expr::Literal { value: Value::Number(123.0) })
-                }),
-            operator: Token { token_type: TokenType::Star, lexeme: "*".to_string(), line: 1 },
-            right: Box::new(
-                Expr::Grouping { expression: Box::new(Expr::Literal { value: Value::Number(45.67) })}
-            )
-        };
-        println!("{}", expression.print());
-        Ok(())
+        let mut parser = Parser::new(tokens);
+        let expression = parser.parse();
+        let interpreter = interpreter::Interpreter{};
+        match expression {
+            Ok(expr) => interpreter.interpret(expr),
+            Err(err) => panic!("{}", err),
+        }
+    }
+
+    pub fn error(token: &Token, message: String) -> String {
+        if token.token_type == TokenType::EoF {
+            format!("Error on line {} at end. {}", token.line, message)
+        } else {
+            format!("Error on line {} at '{}'. {}", token.line, token.lexeme, message)
+        }
+    }
+
+    pub fn runtime_error(message: String) {
+        println!("{}", message);
     }
 
 }
