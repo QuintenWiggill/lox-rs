@@ -187,11 +187,15 @@ impl Parser {
     fn is_at_end(&self) -> bool {
         self.peek().token_type == TokenType::EoF
     } 
-    
+   
+    // if we're at the end of the tokens, return the last token
     fn peek(&self) -> &Token {
-        self.tokens.get(self.current).unwrap()
+        match self.tokens.get(self.current) {
+            Some(token) => token,
+            None => self.tokens.last().unwrap(),
+        }
     }
-    
+
     fn previous(&self) -> &Token {
         self.tokens.get(self.current - 1).unwrap()
     }

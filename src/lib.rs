@@ -2,7 +2,6 @@ use std::fs;
 use std::io::{stdin, Error, ErrorKind};
 use input_stream::InputStream;
 use scanner::{TokenType, Scanner, Token};
-use ast::{Expr, Value, AstPrinter};
 
 use crate::parser::Parser;
 
