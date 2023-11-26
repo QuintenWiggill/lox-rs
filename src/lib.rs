@@ -9,8 +9,11 @@ mod scanner;
 mod ast;
 mod parser;
 mod interpreter;
+mod environment;
 
-pub struct Lox {}
+pub struct Lox {
+    pub had_error: bool,
+}
 
 impl Lox {
     pub fn run_file(path: &String) -> std::io::Result<()> {
@@ -38,10 +41,20 @@ impl Lox {
         let tokens = scanner.scan_tokens();
         println!("{:?}", tokens);
         let mut parser = Parser::new(tokens);
-        let expression = parser.parse();
-        let interpreter = interpreter::Interpreter{};
-        match expression {
-            Ok(expr) => interpreter.interpret(expr),
+        let statements = parser.parse();
+        if parser.had_error {
+            println!("Parser error.");
+            return;
+        }
+        let mut interpreter = interpreter::Interpreter{
+            environment: environment::Environment::new(),
+        };
+        match statements {
+            Ok(stmt) => {
+                for stmt in stmt {
+                    interpreter.interpret(stmt);
+                }
+            },
             Err(err) => panic!("{}", err),
         }
     }

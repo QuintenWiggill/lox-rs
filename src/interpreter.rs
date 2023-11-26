@@ -1,17 +1,34 @@
-use crate::{ast::{ Expr, Value, AstPrinter }, scanner::TokenType, Lox};
+use crate::{ast::{ Expr, Value, AstPrinter, Stmt }, scanner::TokenType, Lox, environment::Environment};
 
-pub struct Interpreter {}
+pub struct Interpreter {
+    pub environment: Environment,
+}
 
 impl Interpreter {
-    pub fn interpret(&self, expr: Expr) {
-        match self.evaluate(expr) {
-            Ok(val) => println!("{}", val.print()),
-            Err(msg) => Lox::runtime_error(msg)
-        }
+    pub fn interpret(&mut self, stmt: Stmt) {
+        match stmt {
+            Stmt::Expression { expression } => match self.evaluate(expression) {
+                Ok(_) => (),
+                Err(msg) => Lox::runtime_error(msg)
+            }
+            Stmt::Print { expression } => match self.evaluate(expression) {
+                Ok(val) => println!("{}", val.print()),
+                Err(msg) => Lox::runtime_error(msg)
+            } 
+            Stmt::Var { name, initializer } => {
+                let val = match initializer {
+                    Some(expr) => self.evaluate(expr),
+                    None => Ok(Value::Nil)
+                };
+                self.environment.define(name.lexeme, val.unwrap());
+            }
+            _ => Lox::runtime_error(String::from("Not implemented."))
+        } 
     }
 
     fn evaluate(&self, expr: Expr) -> Result<Value, String> {
         match expr {
+            Expr::Variable { name } => self.environment.get(&name),
             Expr::Literal { value } => Ok(value),
             Expr::Grouping { expression } => self.evaluate(*expression),
             Expr::Unary { operator, right } => {

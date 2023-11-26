@@ -1,5 +1,6 @@
 use crate::scanner::Token;
 
+#[derive(Clone)]
 pub enum Expr {
     Assign {
         name: Token,
@@ -50,12 +51,51 @@ pub enum Expr {
         name: Token,
     },
 }
-
+#[derive(Clone)]
 pub enum Value {
     Number(f64),
     String(String),
     Boolean(bool),
     Nil,
+}
+
+pub enum Stmt {
+    Block {
+        statements: Vec<Stmt>,
+    },
+    Class {
+        name: Token,
+        superclass: Option<Expr>,
+        methods: Vec<Stmt>,
+    },
+    Expression {
+        expression: Expr,
+    },
+    Function {
+        name: Token,
+        params: Vec<Token>,
+        body: Vec<Stmt>,
+    },
+    If {
+        condition: Expr,
+        then_branch: Box<Stmt>,
+        else_branch: Option<Box<Stmt>>,
+    },
+    Print {
+        expression: Expr,
+    },
+    Return {
+        keyword: Token,
+        value: Option<Expr>,
+    },
+    Var {
+        name: Token,
+        initializer: Option<Expr>,
+    },
+    While {
+        condition: Expr,
+        body: Box<Stmt>,
+    },
 }
 
 impl AstPrinter for Value {
@@ -76,6 +116,23 @@ impl AstPrinter for Expr {
             Expr::Grouping { expression } => self.parenthesize(&"group".to_string(), vec![expression]),
             Expr::Literal { value } => value.print(),
             Expr::Unary { operator, right } => self.parenthesize(&operator.lexeme, vec![right]),
+            _ => String::new()
+        }
+    }
+}
+
+impl AstPrinter for Stmt {
+    fn print(&self) -> String {
+        match self {
+            Stmt::Expression { expression } => expression.print(),
+            Stmt::Print { expression } => expression.print(),
+            Stmt::Var { name, initializer } => {
+                if let Some(expr) = initializer {
+                    self.parenthesize(&"var".to_string(), vec![&Expr::Variable { name: name.clone() }, expr])
+                } else {
+                    self.parenthesize(&"var".to_string(), vec![&Expr::Variable { name: name.clone() }])
+                }
+            }
             _ => String::new()
         }
     }
