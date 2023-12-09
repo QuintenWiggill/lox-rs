@@ -26,8 +26,12 @@ impl Interpreter {
         } 
     }
 
-    fn evaluate(&self, expr: Expr) -> Result<Value, String> {
+    fn evaluate(&mut self, expr: Expr) -> Result<Value, String> {
         match expr {
+            Expr::Assign { name, value } => {
+                let val = self.evaluate(*value);
+                self.environment.assign(name, val.unwrap())
+            }
             Expr::Variable { name } => self.environment.get(&name),
             Expr::Literal { value } => Ok(value),
             Expr::Grouping { expression } => self.evaluate(*expression),

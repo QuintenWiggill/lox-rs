@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use crate::ast::{ Value };
+use crate::ast::{ Value, AstPrinter };
 use crate::scanner::{Token};
 
 pub struct Environment {
@@ -23,5 +23,14 @@ impl Environment {
             Some(val) => Ok(val.clone()),
             None => Err(format!("Undefined variable '{}'.", name.lexeme.as_str()))
         }
+    }
+
+    pub fn assign(&mut self, name: Token, value: Value) -> Result<Value, String> {
+        if self.values.contains_key(&name.lexeme) {
+            self.values.insert(name.lexeme.clone(), value.clone());
+            return Ok(value);
+        }
+
+        Err(format!("Undefined variable {}.", &name.lexeme))
     }
 }
