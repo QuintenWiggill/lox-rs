@@ -30,7 +30,7 @@ impl Interpreter {
         match expr {
             Expr::Assign { name, value } => {
                 let val = self.evaluate(*value);
-                self.environment.assign(name, val.unwrap())
+                self.environment.assign(name, val?)
             }
             Expr::Variable { name } => self.environment.get(&name),
             Expr::Literal { value } => Ok(value),
